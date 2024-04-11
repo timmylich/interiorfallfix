@@ -9,14 +9,14 @@
 - Вы можете изменить настройки скрипта с помощью ряда define'ов.
 - Для полного исправления проваливания игроков под пол рекомендуется сделать полы в интерьерах статичеными(CreateObject), а также ввести систему расчёта заморозки игрока при входе в интерьер на основе его пинга.
 
-- Версия: 1.0.
+- Версия: 1.1.
 - Дата обновления: 11.04.2024.
 - https://github.com/timmylich/interiorfallfix
 */
 
 
 #if !defined ifx_FixTime // Время, которое после телепортации будет проверяться падает ли игрок в миллисекундах
-    #define ifx_FixTime 10000
+    #define ifx_FixTime 7000
 #endif
 
 #if !defined ifx_GetPlayerInterior // Откуда брать информацию о том, в каком интеьере находится игрок, рекомендую заменить на свою переменную для слаженной работы с античитом
@@ -25,6 +25,10 @@
 
 #if !defined ifx_PlayerUpdateCD // Задержка между проверками OnPlayerUpdate в миллисекундах
     #define ifx_PlayerUpdateCD 250
+#endif
+
+#if !defined ifx_FallVelocity // Скорость падения, необходимая для срабатывания
+    #define ifx_FallVelocity 0.3
 #endif
 
 static Float:LastTP[MAX_PLAYERS][3]; // Координаты последней телепортации
@@ -61,7 +65,7 @@ public OnPlayerUpdate(playerid)
             static Float:FallVelocity;
             GetPlayerVelocity(playerid, FallVelocity, FallVelocity, FallVelocity); // Сохраняем скорость падения по оси Z
 
-            if(FallVelocity < -0.3) // Проверяем скорость падения
+            if(FallVelocity < -ifx_FallVelocity) // Проверяем скорость падения
             {
                 SetPlayerPos(playerid, LastTP[playerid][0], LastTP[playerid][1], LastTP[playerid][2]);
             }
