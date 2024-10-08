@@ -1,45 +1,66 @@
 /*
-- Исправление провалов в интерьере путём телепортации игрока обратно на место позиции последней телепортации.
-- Автор: timmylich.
-- ВКонтакте - @timmylich, TG - @timmylich.
-- Кто спиздит себе - тот пидор и за тем уже выехали.
+ - This include helps fix the annoying issue where a player, after teleporting to an interior,
+ - falls through the floor due to connection problems.
+ - The script will teleport the player back to their last teleportation location if it detects that the player is falling.
 
-- Данное исправление работает по принципу "подключил и забыл".
-- То есть для его работы достаточно будет просто подключить его как include сразу после основных включений(a_samp или open.mp).
-- Вы можете изменить настройки скрипта с помощью ряда define'ов.
-- Для полного исправления проваливания игроков под пол рекомендуется сделать полы в интерьерах статичеными(CreateObject), а также ввести систему расчёта заморозки игрока при входе в интерьер на основе его пинга.
+ - This include works on a Plug and Play principle.
+ - In other words, to make it work, you just need to include it as an include right after the main includes (a_samp or open.mp and anti-cheat).
+ - You can customize the script’s settings using a set of defines.
+ - For a complete fix of the issue, it’s recommended to either freeze players during teleportation or use static platforms in interiors (CreateObject).
 
-- Версия: 1.1.
-- Дата обновления: 11.04.2024.
-- https://github.com/timmylich/interiorfallfix
+ - Version: 1.2.
+ - Date: 08.10.2024.
+ - GitHub Repo: https://github.com/timmylich/interiorfallfix
+
+ - Connect with author:
+ - VKontake: https://vk.com/timmylich
+ - Telegram: https://t.me/timmylich
 */
 
-
-#if !defined ifx_FixTime // Время, которое после телепортации будет проверяться падает ли игрок в миллисекундах
+/*
+[EN] The time that after teleportation will be checked whether the player falls in milliseconds.
+[RU] Время, которое после телепортации будет проверяться падает ли игрок в миллисекундах.
+*/
+#if !defined ifx_FixTime
     #define ifx_FixTime 7000
 #endif
 
-#if !defined ifx_GetPlayerInterior // Откуда брать информацию о том, в каком интеьере находится игрок, рекомендую заменить на свою переменную для слаженной работы с античитом
+/*
+[EN] Function for getting the player's interior.
+[RU] Функция для получения интерьера игрока.
+ - %0 - playerid
+*/
+#if !defined ifx_GetPlayerInterior
     #define ifx_GetPlayerInterior(%0) GetPlayerInterior(%0)
 #endif
 
-#if !defined ifx_PlayerUpdateCD // Задержка между проверками OnPlayerUpdate в миллисекундах
+/*
+[EN] Timing between checks in OnPlayerUpdate (ms).
+[RU] Тайминг между срабатываниями проверок в OnPlayerUpdate (в миллисекундах).
+*/
+#if !defined ifx_PlayerUpdateCD
     #define ifx_PlayerUpdateCD 250
 #endif
 
-#if !defined ifx_FallVelocity // Скорость падения, необходимая для срабатывания
+/*
+[EN] The player's falling speed required for the script to trigger.
+[RU] Скорость падения игрока, необходимая для срабатывания скрипта.
+*/
+#if !defined ifx_FallVelocity
     #define ifx_FallVelocity 0.3
 #endif
 
-static Float:LastTP[MAX_PLAYERS][3]; // Координаты последней телепортации
-static LastTPTime[MAX_PLAYERS]; // Время последней телепортации игрока
+
+static Float:LastTP[MAX_PLAYERS][3];
+static LastTPTime[MAX_PLAYERS];
+static LastPlayerUpdate[MAX_PLAYERS];
 
 
-// Перехват SetPlayerPos
+// SetPlayerPos hook
 stock ifx_SetPlayerPos(playerid, Float:x, Float:y, Float:z)
 {
-    LastTPTime[playerid] = GetTickCount(); // Сохраняем время последнего телепорта
-    // Сохраняем позицию последнего телепорта
+    LastTPTime[playerid] = GetTickCount();
+    
     LastTP[playerid][0] = x;
     LastTP[playerid][1] = y;
     LastTP[playerid][2] = z;
@@ -53,19 +74,18 @@ stock ifx_SetPlayerPos(playerid, Float:x, Float:y, Float:z)
 #define SetPlayerPos ifx_SetPlayerPos
 
 
-static LastPlayerUpdate[MAX_PLAYERS]; // Тик последнего срабатывания проверки на падение
-// Перехват коллбэка обновления игрока
+// OnPlayerUpdate hook
 public OnPlayerUpdate(playerid)
 {
-    if(GetTickCount()-ifx_PlayerUpdateCD > LastPlayerUpdate[playerid]) // Проверка на задержку между срабатываниями
+    if(GetTickCount()-ifx_PlayerUpdateCD > LastPlayerUpdate[playerid])
     {
         LastPlayerUpdate[playerid] = GetTickCount();
-        if(LastTPTime[playerid]+ifx_FixTime > GetTickCount() && ifx_GetPlayerInterior(playerid)) // Проверка на прошедшее время и находится ли игрок в интерьере
+        if(LastTPTime[playerid]+ifx_FixTime > GetTickCount() && ifx_GetPlayerInterior(playerid))
         {
             static Float:FallVelocity;
-            GetPlayerVelocity(playerid, FallVelocity, FallVelocity, FallVelocity); // Сохраняем скорость падения по оси Z
+            GetPlayerVelocity(playerid, FallVelocity, FallVelocity, FallVelocity);
 
-            if(FallVelocity < -ifx_FallVelocity) // Проверяем скорость падения
+            if(FallVelocity < -ifx_FallVelocity)
             {
                 SetPlayerPos(playerid, LastTP[playerid][0], LastTP[playerid][1], LastTP[playerid][2]);
             }
