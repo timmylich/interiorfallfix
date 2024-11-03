@@ -18,7 +18,11 @@ The include has several definitions that allow you to configure it. To change a 
 
 The time (in milliseconds) after the last teleport during which the script will check if the player is falling:
 ```pawn
-#define ifx_FixTime 7000
+public OnGameModeInit()
+{
+    ifx_SetFixTime(7000);
+    return 1;
+}
 ```
 Where to get information about which interior the player is in:
 ```pawn
@@ -35,6 +39,12 @@ Lower values mean more frequent checks and reduced performance.
 The player’s fall velocity threshold that triggers the script:
 ```pawn
 #define ifx_FallVelocity 0.3
+```
+
+stocks
+```pawn
+stock ifx_SetFixTime(time_ms)
+stock ifx_GetFixTime()
 ```
 
 # Note
