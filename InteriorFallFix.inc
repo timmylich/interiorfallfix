@@ -5,8 +5,8 @@
 
  - This include works on a Plug and Play principle.
  - In other words, to make it work, you just need to include it as an include right after the main includes (a_samp or open.mp and anti-cheat).
- - You can customize the script’s settings using a set of defines.
- - For a complete fix of the issue, it’s recommended to either freeze players during teleportation or use static platforms in interiors (CreateObject).
+ - You can customize the scriptпїЅs settings using a set of defines.
+ - For a complete fix of the issue, itпїЅs recommended to either freeze players during teleportation or use static platforms in interiors (CreateObject).
 
  - Version: 1.2.
  - Date: 08.10.2024.
@@ -17,17 +17,17 @@
  - Telegram: https://t.me/timmylich
 */
 
+#tryinclude <a_samp>
+
 /*
 [EN] The time that after teleportation will be checked whether the player falls in milliseconds.
-[RU] Время, которое после телепортации будет проверяться падает ли игрок в миллисекундах.
+[RU] пїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
 */
-#if !defined ifx_FixTime
-    #define ifx_FixTime 7000
-#endif
+static ifx_FixTime = 7000;
 
 /*
 [EN] Function for getting the player's interior.
-[RU] Функция для получения интерьера игрока.
+[RU] пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ.
  - %0 - playerid
 */
 #if !defined ifx_GetPlayerInterior
@@ -36,7 +36,7 @@
 
 /*
 [EN] Timing between checks in OnPlayerUpdate (ms).
-[RU] Тайминг между срабатываниями проверок в OnPlayerUpdate (в миллисекундах).
+[RU] пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ OnPlayerUpdate (пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ).
 */
 #if !defined ifx_PlayerUpdateCD
     #define ifx_PlayerUpdateCD 250
@@ -44,26 +44,32 @@
 
 /*
 [EN] The player's falling speed required for the script to trigger.
-[RU] Скорость падения игрока, необходимая для срабатывания скрипта.
+[RU] пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
 */
 #if !defined ifx_FallVelocity
     #define ifx_FallVelocity 0.3
 #endif
 
 
-static Float:LastTP[MAX_PLAYERS][3];
-static LastTPTime[MAX_PLAYERS];
-static LastPlayerUpdate[MAX_PLAYERS];
+enum e_ifx_player_data
+{
+    
+    Float:_LastTeleportPos[3],
+    _LastTeleportTime,
+    _LastPlayerUpdate
+}
+static
+        ifx_Data[MAX_PLAYERS][e_ifx_player_data];
 
 
 // SetPlayerPos hook
 stock ifx_SetPlayerPos(playerid, Float:x, Float:y, Float:z)
 {
-    LastTPTime[playerid] = GetTickCount();
+    ifx_Data[playerid][_LastTeleportTime] = GetTickCount();
     
-    LastTP[playerid][0] = x;
-    LastTP[playerid][1] = y;
-    LastTP[playerid][2] = z;
+    ifx_Data[playerid][_LastTeleportPos][0] = x;
+    ifx_Data[playerid][_LastTeleportPos][1] = y;
+    ifx_Data[playerid][_LastTeleportPos][2] = z;
     return SetPlayerPos(playerid, x, y, z);
 }
 #if defined _ALS_SetPlayerPos
@@ -77,21 +83,20 @@ stock ifx_SetPlayerPos(playerid, Float:x, Float:y, Float:z)
 // OnPlayerUpdate hook
 public OnPlayerUpdate(playerid)
 {
-    if(GetTickCount()-ifx_PlayerUpdateCD > LastPlayerUpdate[playerid])
+    if(GetTickCount()-ifx_PlayerUpdateCD > ifx_Data[playerid][_LastPlayerUpdate])
     {
-        LastPlayerUpdate[playerid] = GetTickCount();
-        if(LastTPTime[playerid]+ifx_FixTime > GetTickCount() && ifx_GetPlayerInterior(playerid))
+        ifx_Data[playerid][_LastPlayerUpdate] = GetTickCount();
+        if(ifx_Data[playerid][_LastTeleportTime]+ifx_FixTime > GetTickCount() && ifx_GetPlayerInterior(playerid))
         {
             static Float:FallVelocity;
             GetPlayerVelocity(playerid, FallVelocity, FallVelocity, FallVelocity);
 
             if(FallVelocity < -ifx_FallVelocity)
             {
-                SetPlayerPos(playerid, LastTP[playerid][0], LastTP[playerid][1], LastTP[playerid][2]);
+                SetPlayerPos(playerid, ifx_Data[playerid][_LastTeleportPos][0], ifx_Data[playerid][_LastTeleportPos][1], ifx_Data[playerid][_LastTeleportPos][2]);
             }
         }
     }
-
 	#if defined ifx_OnPlayerUpdate
 		return ifx_OnPlayerUpdate(playerid);
 	#else
@@ -107,3 +112,12 @@ public OnPlayerUpdate(playerid)
 #if defined ifx_OnPlayerUpdate
 	forward ifx_OnPlayerUpdate(playerid);
 #endif
+
+stock ifx_SetFixTime(time_ms)
+{
+    ifx_FixTime = time_ms;
+}
+stock ifx_GetFixTime()
+{
+    return ifx_FixTime;
+}
