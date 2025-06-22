@@ -82,4 +82,4 @@ The Z coordinate offset downward, upon reaching which the script will consider t
 
 **timmylich. | [VKontakte](vk.com/timmylich) | [Telegram](t.me/timmylich) | [Discord](http://discordapp.com/users/523177185062682685)**
 
-**Originally for [Brentwood Project](bw-p.ru)**
+**Originally for [Brentwood Project](https://bw-p.ru)**
