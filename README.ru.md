@@ -84,3 +84,5 @@ SetPlayerPos(playerid, x, y, z);
 
 
 **timmylich. | [ВКонтакте](vk.com/timmylich) | [Telegram](t.me/timmylich) | [Discord](http://discordapp.com/users/523177185062682685)**
+
+**Изначально разработано для [Brentwood Project](bw-p.ru)**
